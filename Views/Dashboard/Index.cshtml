@@ -1,0 +1,247 @@
+@model DevPulse.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard">
+
+    <header class="hero">
+        <div>
+            <span class="badge">DEV PULSE WORKSPACE</span>
+            <h1>
+                Build.
+                <span>Ship.</span>
+                Grow.
+            </h1>
+            <p>
+                Your personal engineering cockpit for tracking projects, tasks, and tech stack productivity.
+            </p>
+        </div>
+
+        <div class="hero-icon">
+            ⚡
+        </div>
+    </header>
+
+    <section class="stats">
+        <div class="stat-card">
+            <div class="stat-icon">💻</div>
+            <div>
+                <span>Total Projects</span>
+                <strong>@Model.ProjectCount</strong>
+                <small style="color: #94a3b8; font-size: 11px;">@Model.ActiveProjectCount Active &bull; @Model.CompletedProjectCount Done</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⏱️</div>
+            <div>
+                <span>Hours Logged</span>
+                <strong>@Model.LearningHours.ToString("0.#")h</strong>
+                <small style="color: #94a3b8; font-size: 11px;">of @Model.EstimatedHours.ToString("0.#")h planned</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div>
+                <span>Tasks Completion</span>
+                <strong>@Model.CompletedTasksCount / @Model.TotalTasksCount</strong>
+                <small style="color: #94a3b8; font-size: 11px;">@Model.OverallProgress% completed</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">🤖</div>
+            <div>
+                <span>AI Stack</span>
+                <strong>@Model.AiToolsCount Tools</strong>
+                <small style="color: #94a3b8; font-size: 11px;">Developer Assistants</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRENDING TECHNOLOGIES -->
+    <section>
+        <div class="section-title">
+            <div>
+                <span class="eyebrow">TRENDING</span>
+                <h2>Technologies</h2>
+            </div>
+        </div>
+
+        <div class="technology-grid">
+            <div class="technology-card">
+                <div class="tech-logo">C#</div>
+                <div>
+                    <h3>C# &amp; .NET 10</h3>
+                    <p>Modern Web, Cloud &amp; Microservices</p>
+                </div>
+                <strong>95%</strong>
+            </div>
+
+            <div class="technology-card">
+                <div class="tech-logo">PG</div>
+                <div>
+                    <h3>PostgreSQL</h3>
+                    <p>Relational &amp; Vector Data Storage</p>
+                </div>
+                <strong>90%</strong>
+            </div>
+
+            <div class="technology-card">
+                <div class="tech-logo">AI</div>
+                <div>
+                    <h3>AI Agents &amp; LLMs</h3>
+                    <p>Next Generation Developer Workflows</p>
+                </div>
+                <strong>88%</strong>
+            </div>
+        </div>
+    </section>
+
+    <div class="content-grid">
+
+        <!-- PROJECTS PANEL -->
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">WORKSPACE</span>
+                    <h2>Active Projects</h2>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <a asp-controller="Projects" asp-action="Index" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">
+                        View All
+                    </a>
+                    <a asp-controller="Projects" asp-action="Create" class="small-button">
+                        + New
+                    </a>
+                </div>
+            </div>
+
+            @if (!Model.Projects.Any())
+            {
+                <div class="empty-state" style="padding: 40px 20px;">
+                    <div class="empty-icon">📂</div>
+                    <h3>No projects yet</h3>
+                    <p>Create your first project to start tracking your development progress.</p>
+                    <a asp-controller="Projects" asp-action="Create" class="primary-button" style="margin-top: 10px;">
+                        Create Project
+                    </a>
+                </div>
+            }
+            else
+            {
+                @foreach (var project in Model.Projects.Take(5))
+                {
+                    <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id" style="text-decoration: none; color: inherit; display: block;">
+                        <div class="project project-clickable">
+                            <div class="project-top">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 style="margin: 0;">@project.Name</h3>
+                                        <span class="status-badge @project.Status.ToLower()">@project.Status</span>
+                                    </div>
+                                    <span style="color: #64748b; font-size: 12px; margin-top: 4px; display: inline-block;">
+                                        @project.Technology &bull; @project.Tasks.Count tasks (@project.Tasks.Count(t => t.Status == "Done") done)
+                                    </span>
+                                </div>
+
+                                <strong>@project.Progress%</strong>
+                            </div>
+
+                            <div class="progress">
+                                <div style="width: @project.Progress%"></div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            }
+        </section>
+
+        <!-- RIGHT COLUMN: UPCOMING TASKS & AI STACK -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+
+            <!-- UPCOMING TASKS PANEL -->
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="eyebrow">ACTION ITEMS</span>
+                        <h2>Upcoming Tasks</h2>
+                    </div>
+
+                    <a asp-controller="Tasks" asp-action="Index" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">
+                        All Tasks
+                    </a>
+                </div>
+
+                @if (!Model.UpcomingTasks.Any())
+                {
+                    <p style="color: #64748b; font-size: 13px; margin: 15px 0;">
+                        No pending tasks with deadlines right now. Awesome job staying caught up!
+                    </p>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        @foreach (var task in Model.UpcomingTasks)
+                        {
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid #1e293b; border-radius: 10px;">
+                                <div>
+                                    <strong style="font-size: 14px; display: block;">@task.Title</strong>
+                                    <span style="font-size: 11px; color: #64748b;">
+                                        @(task.Project?.Name ?? "General") &bull;
+                                        <span style="color: #f59e0b;">Due @task.DueDate?.ToString("MMM dd")</span>
+                                    </span>
+                                </div>
+                                <form asp-controller="Tasks" asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                    <input type="hidden" name="id" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="Done" />
+                                    <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Dashboard")" />
+                                    <button type="submit" class="secondary-button" style="padding: 5px 9px; font-size: 11px;" title="Mark as Done">
+                                        ✓ Done
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <!-- AI STACK PANEL -->
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="eyebrow">PRODUCTIVITY</span>
+                        <h2>AI Tools Hub</h2>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                    @foreach (var tool in Model.AiTools)
+                    {
+                        <a href="@tool.Url" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+                            <div class="ai-tool" style="transition: border-color 0.2s, transform 0.2s;">
+                                <div class="ai-icon">
+                                    @tool.Icon
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <h3 style="margin: 0; font-size: 15px;">@tool.Name</h3>
+                                        <span style="font-size: 10px; padding: 2px 7px; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border-radius: 6px;">@tool.Category</span>
+                                    </div>
+                                    <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">@tool.Description</p>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+</div>

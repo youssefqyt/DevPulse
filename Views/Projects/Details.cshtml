@@ -1,0 +1,237 @@
+@model DevPulse.Models.Project
+
+@{
+    ViewData["Title"] = $"{Model.Name} - Details";
+    var totalTasks = Model.Tasks?.Count ?? 0;
+    var completedTasks = Model.Tasks?.Count(t => t.Status == "Done") ?? 0;
+    var inProgressTasks = Model.Tasks?.Count(t => t.Status == "In Progress") ?? 0;
+    var todoTasks = Model.Tasks?.Count(t => t.Status == "Todo") ?? 0;
+    var hoursPercentage = Model.EstimatedHours > 0
+        ? Math.Min(100, (int)Math.Round((double)Model.HoursSpent / (double)Model.EstimatedHours * 100))
+        : 0;
+    var isOverBudget = Model.EstimatedHours > 0 && Model.HoursSpent > Model.EstimatedHours;
+}
+
+<div class="page-shell">
+
+    <!-- TOP HEADER -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span class="eyebrow" style="margin: 0;">PROJECT OVERVIEW</span>
+                <span class="status-badge @Model.Status.ToLower()">@Model.Status</span>
+                <span class="priority-pill @Model.Priority.ToLower()">@Model.Priority Priority</span>
+            </div>
+            <h1 style="margin: 4px 0 8px;">@Model.Name</h1>
+            <p style="color: #94a3b8; font-size: 15px;">
+                @(string.IsNullOrWhiteSpace(Model.Description) ? "No description provided." : Model.Description)
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="primary-button">
+                ✎ Edit Project
+            </a>
+            <a asp-controller="Tasks" asp-action="Create" asp-route-projectId="@Model.Id" class="secondary-button">
+                + Add Task
+            </a>
+            <a asp-action="Index" class="secondary-button">
+                &larr; Back to Projects
+            </a>
+        </div>
+    </div>
+
+    <!-- METRICS & PROGRESS ROW -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+
+        <!-- PROGRESS & STATS PANEL -->
+        <div class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="eyebrow" style="margin: 0;">DELIVERY PROGRESS</span>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <strong style="font-size: 22px; color: #818cf8;">@Model.Progress%</strong>
+                    <a asp-action="SyncProgress" asp-route-id="@Model.Id" class="secondary-button" style="padding: 4px 10px; font-size: 11px;" title="Recalculate progress based on completed tasks">
+                        ⟳ Sync with Tasks
+                    </a>
+                </div>
+            </div>
+
+            <div class="progress" style="height: 10px; margin-bottom: 24px;">
+                <div style="width: @Model.Progress%"></div>
+            </div>
+
+            <div class="detail-grid">
+                <div>
+                    <span>Technology Stack</span>
+                    <strong style="color: #a5b4fc;">@Model.Technology</strong>
+                </div>
+
+                <div>
+                    <span>Start Date</span>
+                    <strong>@Model.StartDate.ToString("dd MMM yyyy")</strong>
+                </div>
+
+                <div>
+                    <span>Due Date</span>
+                    <strong style="@(Model.DueDate.HasValue && Model.DueDate.Value < DateOnly.FromDateTime(DateTime.Today) && Model.Status != "Completed" ? "color: #f87171;" : "")">
+                        @(Model.DueDate?.ToString("dd MMM yyyy") ?? "No deadline")
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Created At</span>
+                    <strong>@Model.CreatedAt.ToString("dd MMM yyyy")</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIME / BUDGET TRACKER PANEL -->
+        <div class="panel">
+            <span class="eyebrow" style="margin: 0 0 12px 0; display: block;">TIME &amp; BUDGET</span>
+
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <span style="color: #94a3b8; font-size: 13px;">Hours Logged</span>
+                <strong style="font-size: 18px; color: @(isOverBudget ? "#f87171" : "#f8fafc");">
+                    @Model.HoursSpent.ToString("0.#") / @Model.EstimatedHours.ToString("0.#") hrs
+                </strong>
+            </div>
+
+            <div class="progress-track" style="height: 8px; margin-bottom: 16px;">
+                <div class="progress-fill" style="width: @hoursPercentage%; background: @(isOverBudget ? "linear-gradient(90deg, #ef4444, #f87171)" : "linear-gradient(90deg, #10b981, #34d399)");"></div>
+            </div>
+
+            @if (isOverBudget)
+            {
+                <div style="padding: 8px 12px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; font-size: 12px;">
+                    ⚠️ Hours spent has exceeded initial estimate by @((Model.HoursSpent - Model.EstimatedHours).ToString("0.#")) hrs.
+                </div>
+            }
+            else
+            {
+                <div style="padding: 8px 12px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #6ee7b7; font-size: 12px;">
+                    ✓ Under estimated budget. @((Model.EstimatedHours - Model.HoursSpent).ToString("0.#")) hrs remaining.
+                </div>
+            }
+
+            <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8;">
+                <span>Todo: <strong style="color: #cbd5e1;">@todoTasks</strong></span>
+                <span>In Progress: <strong style="color: #fbbf24;">@inProgressTasks</strong></span>
+                <span>Done: <strong style="color: #34d399;">@completedTasks</strong></span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PROJECT TASKS SECTION -->
+    <div class="panel">
+        <div class="panel-header" style="margin-bottom: 20px;">
+            <div>
+                <span class="eyebrow">WORK BREAKDOWN</span>
+                <h2>Project Tasks (@completedTasks / @totalTasks Done)</h2>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <a asp-controller="Tasks" asp-action="Create" asp-route-projectId="@Model.Id" class="small-button">
+                    + New Task
+                </a>
+                <a asp-controller="Tasks" asp-action="Index" asp-route-projectId="@Model.Id" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">
+                    Open Task Board &rarr;
+                </a>
+            </div>
+        </div>
+
+        @if (Model.Tasks == null || !Model.Tasks.Any())
+        {
+            <div class="empty-state" style="padding: 40px 20px;">
+                <div class="empty-icon">📝</div>
+                <h3>No tasks created for this project yet</h3>
+                <p>Break down this project into actionable engineering tasks to track progress easily.</p>
+                <a asp-controller="Tasks" asp-action="Create" asp-route-projectId="@Model.Id" class="primary-button" style="margin-top: 10px;">
+                    + Create First Task
+                </a>
+            </div>
+        }
+        else
+        {
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                @foreach (var task in Model.Tasks)
+                {
+                    <div class="task-row @(task.Status == "Done" ? "task-completed" : "")">
+                        <div style="display: flex; align-items: flex-start; gap: 14px; flex: 1;">
+                            <!-- STATUS QUICK TOGGLE -->
+                            <form asp-controller="Tasks" asp-action="UpdateStatus" method="post" style="margin: 0; padding-top: 2px;">
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <input type="hidden" name="newStatus" value="@(task.Status == "Done" ? "Todo" : "Done")" />
+                                <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Projects", new { id = Model.Id })" />
+                                <button type="submit" class="checkbox-btn @(task.Status == "Done" ? "checked" : "")" title="@(task.Status == "Done" ? "Mark as Todo" : "Mark as Done")">
+                                    @(task.Status == "Done" ? "✓" : "")
+                                </button>
+                            </form>
+
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h3 style="margin: 0; font-size: 16px; text-decoration: @(task.Status == "Done" ? "line-through" : "none"); color: @(task.Status == "Done" ? "#64748b" : "#f8fafc");">
+                                        @task.Title
+                                    </h3>
+                                    <span class="status-badge @task.Status.ToLower().Replace(" ", "-")" style="font-size: 10px; padding: 3px 8px;">
+                                        @task.Status
+                                    </span>
+                                    <span class="priority-pill @task.Priority.ToLower()" style="font-size: 10px; padding: 2px 7px;">
+                                        @task.Priority
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(task.Description))
+                                {
+                                    <p style="margin: 6px 0 0; color: #94a3b8; font-size: 13px;">
+                                        @task.Description
+                                    </p>
+                                }
+
+                                <div class="task-meta" style="margin-top: 8px;">
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        <span>
+                                            📅 Due @task.DueDate.Value.ToString("dd MMM yyyy")
+                                        </span>
+                                    }
+                                    <span>
+                                        Added @task.CreatedAt.ToString("dd MMM")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTIONS -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            @if (task.Status != "In Progress" && task.Status != "Done")
+                            {
+                                <form asp-controller="Tasks" asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                    <input type="hidden" name="id" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="In Progress" />
+                                    <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Projects", new { id = Model.Id })" />
+                                    <button type="submit" class="secondary-button" style="padding: 5px 9px; font-size: 11px;">
+                                        ▶ Start
+                                    </button>
+                                </form>
+                            }
+
+                            <a asp-controller="Tasks" asp-action="Edit" asp-route-id="@task.Id" class="secondary-button" style="padding: 5px 9px; font-size: 11px;">
+                                Edit
+                            </a>
+
+                            <form asp-controller="Tasks" asp-action="Delete" method="post" onsubmit="return confirm('Delete task: @task.Title?');" style="margin: 0;">
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Projects", new { id = Model.Id })" />
+                                <button type="submit" class="danger-button" style="padding: 5px 9px; font-size: 11px;">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

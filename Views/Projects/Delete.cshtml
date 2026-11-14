@@ -1,0 +1,63 @@
+@model DevPulse.Models.Project
+
+@{
+    ViewData["Title"] = $"Delete {Model.Name}";
+    var taskCount = Model.Tasks?.Count ?? 0;
+}
+
+<div class="page-shell">
+
+    <div class="panel" style="max-width: 600px; margin: 40px auto; border-color: rgba(239, 68, 68, 0.3);">
+
+        <span class="eyebrow" style="color: #f87171;">DANGER ZONE</span>
+
+        <h2 style="margin-top: 5px;">Delete Project</h2>
+
+        <p style="color: #cbd5e1; line-height: 1.6; margin: 20px 0;">
+            Are you sure you want to permanently delete the project
+            <strong style="color: #f8fafc;">@Model.Name</strong>?
+        </p>
+
+        @if (taskCount > 0)
+        {
+            <div style="padding: 12px 16px; border-radius: 10px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; font-size: 13px; margin-bottom: 25px;">
+                ⚠️ <strong>Warning:</strong> This will also permanently delete <strong>@taskCount associated task@(taskCount > 1 ? "s" : "")</strong>.
+            </div>
+        }
+
+        <div class="detail-grid" style="margin-bottom: 30px;">
+            <div>
+                <span>Technology</span>
+                <strong>@Model.Technology</strong>
+            </div>
+            <div>
+                <span>Status</span>
+                <strong>@Model.Status</strong>
+            </div>
+            <div>
+                <span>Progress</span>
+                <strong>@Model.Progress%</strong>
+            </div>
+            <div>
+                <span>Hours Logged</span>
+                <strong>@Model.HoursSpent / @Model.EstimatedHours hrs</strong>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-actions">
+                <button type="submit" class="danger-button" style="padding: 12px 24px; font-size: 14px;">
+                    Permanently Delete
+                </button>
+
+                <a asp-action="Index" class="secondary-button" style="padding: 12px 24px; font-size: 14px;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+    </div>
+
+</div>

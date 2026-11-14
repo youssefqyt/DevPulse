@@ -1,0 +1,109 @@
+@model DevPulse.Models.TaskItem
+
+@{
+    var project = ViewBag.Project as DevPulse.Models.Project;
+    var projects = ViewBag.Projects as List<DevPulse.Models.Project> ?? [];
+    ViewData["Title"] = project != null ? $"Add Task to {project.Name}" : "Create Task";
+}
+
+<div class="page-shell">
+
+    <div class="panel" style="max-width: 700px; margin: 0 auto;">
+
+        <span class="eyebrow">BACKLOG ITEM</span>
+
+        <h2 style="margin-top: 5px; margin-bottom: 25px;">
+            @(project != null ? $"Add Task to {project.Name}" : "Create New Task")
+        </h2>
+
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+            @if (project != null)
+            {
+                <input type="hidden" asp-for="ProjectId" value="@project.Id" />
+            }
+
+            <div class="form-grid">
+
+                @if (project == null)
+                {
+                    <div class="form-group full">
+                        <label asp-for="ProjectId">Assign to Project *</label>
+                        <select asp-for="ProjectId" required>
+                            <option value="">-- Select Project --</option>
+                            @foreach (var p in projects)
+                            {
+                                <option value="@p.Id">@p.Name (@p.Technology)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ProjectId" class="text-danger"></span>
+                    </div>
+                }
+
+                <div class="form-group full">
+                    <label asp-for="Title">Task Title *</label>
+                    <input asp-for="Title"
+                           placeholder="e.g. Implement JWT authentication and refresh tokens" required />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description"
+                              rows="4"
+                              placeholder="Key acceptance criteria, technical details, or notes..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Status">Status</label>
+                    <select asp-for="Status">
+                        <option value="Todo">Todo</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Priority">Priority</label>
+                    <select asp-for="Priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                    <span asp-validation-for="Priority" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full">
+                    <label asp-for="DueDate">Due Date</label>
+                    <input asp-for="DueDate"
+                           type="date" />
+                    <span asp-validation-for="DueDate" class="text-danger"></span>
+                </div>
+
+            </div>
+
+            <div class="form-actions" style="margin-top: 30px;">
+                <button type="submit"
+                        class="primary-button">
+                    Create Task
+                </button>
+
+                <a asp-action="Index"
+                   asp-route-projectId="@(project?.Id)"
+                   class="secondary-button">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

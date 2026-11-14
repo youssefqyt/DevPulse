@@ -1,0 +1,110 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - DevPulse</title>
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="site-header">
+        <nav class="navbar">
+            <a asp-controller="Dashboard"
+               asp-action="Index"
+               class="brand">
+                <span class="brand-icon">⚡</span>
+                <span class="brand-text">
+                    Dev<span>Pulse</span>
+                </span>
+            </a>
+
+            <div class="nav-links">
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="nav-link @(currentController == "Dashboard" ? "active" : "")">
+                    Dashboard
+                </a>
+
+                <a asp-controller="Projects"
+                   asp-action="Index"
+                   class="nav-link @(currentController == "Projects" ? "active" : "")">
+                    Projects
+                </a>
+
+                <a asp-controller="Tasks"
+                   asp-action="Index"
+                   class="nav-link @(currentController == "Tasks" ? "active" : "")">
+                    Tasks
+                </a>
+            </div>
+
+            <div class="nav-actions">
+                <a asp-controller="Projects"
+                   asp-action="Create"
+                   class="nav-create">
+                    <span>+</span>
+                    New Project
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- NOTIFICATION ALERTS -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-container">
+            <div class="alert-banner alert-success">
+                <span>✓ @TempData["SuccessMessage"]</span>
+                <button type="button" class="alert-close" onclick="this.parentElement.parentElement.remove();">&times;</button>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-container">
+            <div class="alert-banner alert-error">
+                <span>⚠ @TempData["ErrorMessage"]</span>
+                <button type="button" class="alert-close" onclick="this.parentElement.parentElement.remove();">&times;</button>
+            </div>
+        </div>
+    }
+
+    <!-- MAIN -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="footer-logo">⚡</div>
+                <div>
+                    <strong>DevPulse</strong>
+                    <span>Developer productivity workspace</span>
+                </div>
+            </div>
+
+            <div class="footer-right">
+                <span>© @DateTime.Now.Year DevPulse</span>
+                <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

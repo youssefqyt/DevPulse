@@ -1,0 +1,119 @@
+@model DevPulse.Models.Project
+
+@{
+    ViewData["Title"] = $"Edit {Model.Name}";
+}
+
+<div class="page-shell">
+
+    <div class="panel" style="max-width: 800px; margin: 0 auto;">
+
+        <span class="eyebrow">WORKSPACE</span>
+        <h2 style="margin-top: 5px; margin-bottom: 25px;">Edit Project</h2>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label asp-for="Name">Project Name *</label>
+                    <input asp-for="Name" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Technology">Technology Stack *</label>
+                    <input asp-for="Technology" required />
+                    <span asp-validation-for="Technology" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Status">Status</label>
+                    <select asp-for="Status">
+                        <option value="Active">Active</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Paused">Paused</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Priority">Priority</label>
+                    <select asp-for="Priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                    <span asp-validation-for="Priority" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Progress">Progress %</label>
+                    <input asp-for="Progress"
+                           type="number"
+                           min="0"
+                           max="100" />
+                    <span asp-validation-for="Progress" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="EstimatedHours">Estimated Hours</label>
+                    <input asp-for="EstimatedHours"
+                           type="number"
+                           step="0.5"
+                           min="0" />
+                    <span asp-validation-for="EstimatedHours" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="HoursSpent">Hours Spent</label>
+                    <input asp-for="HoursSpent"
+                           type="number"
+                           step="0.5"
+                           min="0" />
+                    <span asp-validation-for="HoursSpent" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="StartDate">Start Date</label>
+                    <input asp-for="StartDate"
+                           type="date" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DueDate">Due Date</label>
+                    <input asp-for="DueDate"
+                           type="date" />
+                    <span asp-validation-for="DueDate" class="text-danger"></span>
+                </div>
+
+            </div>
+
+            <div class="form-actions" style="margin-top: 30px;">
+                <button type="submit" class="primary-button">
+                    Save Changes
+                </button>
+
+                <a asp-action="Details" asp-route-id="@Model.Id" class="secondary-button">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

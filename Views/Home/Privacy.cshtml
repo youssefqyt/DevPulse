@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+
+<div class="page-shell">
+    <div class="panel">
+        <span class="eyebrow">LEGAL & COMPLIANCE</span>
+        <h1>Privacy Policy</h1>
+        <p style="color: #94a3b8; font-size: 15px; margin-bottom: 24px;">
+            Last updated: November 2026
+        </p>
+
+        <div style="color: #cbd5e1; line-height: 1.8; font-size: 15px; display: flex; flex-direction: column; gap: 20px;">
+            <p>
+                At <strong>DevPulse</strong>, we respect your privacy and are committed to protecting any developer or project workspace data you manage within this application.
+            </p>
+
+            <h3 style="color: #f8fafc; margin-top: 10px;">1. Data Storage</h3>
+            <p>
+                All your project data, time logs, tasks, and notes are stored strictly in your local or self-hosted PostgreSQL database. We do not transmit or sell your project contents to any third parties.
+            </p>
+
+            <h3 style="color: #f8fafc; margin-top: 10px;">2. AI Tools Usage</h3>
+            <p>
+                DevPulse provides directory links to external AI productivity tools (such as ChatGPT, GitHub Copilot, and Claude). Interactions with external tools are governed solely by their respective privacy terms and usage policies.
+            </p>
+
+            <h3 style="color: #f8fafc; margin-top: 10px;">3. Security</h3>
+            <p>
+                We use secure entity mapping, parameterized queries with EF Core, and anti-forgery tokens to protect against unauthorized modifications and data compromise.
+            </p>
+        </div>
+
+        <div class="form-actions" style="margin-top: 35px;">
+            <a asp-controller="Dashboard" asp-action="Index" class="primary-button">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,295 @@
+@model List<DevPulse.Models.TaskItem>
+
+@{
+    var project = ViewBag.Project as DevPulse.Models.Project;
+    var isAllTasks = ViewBag.IsAllTasks as bool? ?? false;
+    var currentStatus = ViewBag.CurrentStatus as string ?? "All";
+    var currentPriority = ViewBag.CurrentPriority as string ?? "All";
+    var currentSearch = ViewBag.CurrentSearch as string;
+
+    ViewData["Title"] = isAllTasks ? "All Tasks" : $"Tasks - {project?.Name}";
+
+    var todoList = Model.Where(t => t.Status == "Todo").ToList();
+    var inProgressList = Model.Where(t => t.Status == "In Progress").ToList();
+    var doneList = Model.Where(t => t.Status == "Done").ToList();
+}
+
+<div class="page-shell">
+
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">@(isAllTasks ? "GLOBAL WORKSPACE" : "PROJECT TASKS")</span>
+            <h1>@(isAllTasks ? "Task Board" : project?.Name)</h1>
+            <p>
+                @(isAllTasks
+                    ? "Overview of all engineering tasks across your active projects."
+                    : $"Tracking {Model.Count} tasks for {project?.Name} ({doneList.Count} completed).")
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            @if (!isAllTasks && project != null)
+            {
+                <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id" class="secondary-button">
+                    &larr; Project Overview
+                </a>
+            }
+            <a asp-action="Create"
+               asp-route-projectId="@project?.Id"
+               class="primary-button">
+                <span>+</span> New Task
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTER & SEARCH PANEL -->
+    <div class="filter-panel" style="margin-bottom: 30px;">
+        <form method="get" asp-action="Index" class="filter-form">
+            @if (project != null)
+            {
+                <input type="hidden" name="projectId" value="@project.Id" />
+            }
+
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text"
+                       name="search"
+                       value="@currentSearch"
+                       placeholder="Search tasks by title or description..."
+                       class="search-input" />
+            </div>
+
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select name="status" onchange="this.form.submit()" class="filter-select">
+                        <option value="All" selected="@(currentStatus == "All")">All Statuses</option>
+                        <option value="Todo" selected="@(currentStatus == "Todo")">Todo</option>
+                        <option value="In Progress" selected="@(currentStatus == "In Progress")">In Progress</option>
+                        <option value="Done" selected="@(currentStatus == "Done")">Done</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select name="priority" onchange="this.form.submit()" class="filter-select">
+                        <option value="All" selected="@(currentPriority == "All")">All Priorities</option>
+                        <option value="High" selected="@(currentPriority == "High")">High</option>
+                        <option value="Medium" selected="@(currentPriority == "Medium")">Medium</option>
+                        <option value="Low" selected="@(currentPriority == "Low")">Low</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="secondary-button" style="padding: 9px 16px;">Filter</button>
+                @if (!string.IsNullOrEmpty(currentSearch) || currentStatus != "All" || currentPriority != "All")
+                {
+                    <a asp-action="Index" asp-route-projectId="@project?.Id" class="secondary-button" style="padding: 9px 14px;">Reset</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h2>No tasks found</h2>
+            <p>
+                @(string.IsNullOrEmpty(currentSearch) && currentStatus == "All" && currentPriority == "All"
+                    ? "Create your first task to start organizing your development backlog."
+                    : "No tasks matched your active filters.")
+            </p>
+
+            <a asp-action="Create"
+               asp-route-projectId="@project?.Id"
+               class="primary-button">
+                + Create Task
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- KANBAN BOARD VIEW -->
+        <div class="kanban-grid">
+
+            <!-- TODO COLUMN -->
+            <div class="kanban-col">
+                <div class="kanban-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="kanban-dot dot-todo"></span>
+                        <h3>Todo</h3>
+                    </div>
+                    <span class="kanban-count">@todoList.Count</span>
+                </div>
+
+                <div class="kanban-cards">
+                    @foreach (var task in todoList)
+                    {
+                        <div class="task-card">
+                            <div class="task-card-header">
+                                <span class="priority-pill @task.Priority.ToLower()">@task.Priority</span>
+                                @if (isAllTasks && task.Project != null)
+                                {
+                                    <span class="project-tag">@task.Project.Name</span>
+                                }
+                            </div>
+
+                            <h4 class="task-title">@task.Title</h4>
+
+                            @if (!string.IsNullOrWhiteSpace(task.Description))
+                            {
+                                <p class="task-desc">@task.Description</p>
+                            }
+
+                            <div class="task-footer">
+                                <span class="task-date">
+                                    @(task.DueDate.HasValue ? $"📅 {task.DueDate.Value:dd MMM}" : "No date")
+                                </span>
+
+                                <div class="task-btn-group">
+                                    <!-- Advance to In Progress -->
+                                    <form asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="In Progress" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn" title="Start task">▶ Start</button>
+                                    </form>
+
+                                    <a asp-action="Edit" asp-route-id="@task.Id" class="task-action-btn" title="Edit">✎</a>
+
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Delete task: @task.Title?');" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn btn-del" title="Delete">✕</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- IN PROGRESS COLUMN -->
+            <div class="kanban-col">
+                <div class="kanban-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="kanban-dot dot-progress"></span>
+                        <h3>In Progress</h3>
+                    </div>
+                    <span class="kanban-count">@inProgressList.Count</span>
+                </div>
+
+                <div class="kanban-cards">
+                    @foreach (var task in inProgressList)
+                    {
+                        <div class="task-card card-progress">
+                            <div class="task-card-header">
+                                <span class="priority-pill @task.Priority.ToLower()">@task.Priority</span>
+                                @if (isAllTasks && task.Project != null)
+                                {
+                                    <span class="project-tag">@task.Project.Name</span>
+                                }
+                            </div>
+
+                            <h4 class="task-title">@task.Title</h4>
+
+                            @if (!string.IsNullOrWhiteSpace(task.Description))
+                            {
+                                <p class="task-desc">@task.Description</p>
+                            }
+
+                            <div class="task-footer">
+                                <span class="task-date">
+                                    @(task.DueDate.HasValue ? $"📅 {task.DueDate.Value:dd MMM}" : "No date")
+                                </span>
+
+                                <div class="task-btn-group">
+                                    <!-- Mark Done -->
+                                    <form asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="Done" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn btn-complete" title="Mark Done">✓ Done</button>
+                                    </form>
+
+                                    <!-- Reset to Todo -->
+                                    <form asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="Todo" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn" title="Back to Todo">↺</button>
+                                    </form>
+
+                                    <a asp-action="Edit" asp-route-id="@task.Id" class="task-action-btn" title="Edit">✎</a>
+
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Delete task: @task.Title?');" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn btn-del" title="Delete">✕</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- DONE COLUMN -->
+            <div class="kanban-col">
+                <div class="kanban-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="kanban-dot dot-done"></span>
+                        <h3>Done</h3>
+                    </div>
+                    <span class="kanban-count">@doneList.Count</span>
+                </div>
+
+                <div class="kanban-cards">
+                    @foreach (var task in doneList)
+                    {
+                        <div class="task-card card-done">
+                            <div class="task-card-header">
+                                <span class="priority-pill @task.Priority.ToLower()">@task.Priority</span>
+                                @if (isAllTasks && task.Project != null)
+                                {
+                                    <span class="project-tag">@task.Project.Name</span>
+                                }
+                            </div>
+
+                            <h4 class="task-title strike">@task.Title</h4>
+
+                            @if (!string.IsNullOrWhiteSpace(task.Description))
+                            {
+                                <p class="task-desc">@task.Description</p>
+                            }
+
+                            <div class="task-footer">
+                                <span class="task-date" style="color: #34d399;">✓ Completed</span>
+
+                                <div class="task-btn-group">
+                                    <!-- Reopen -->
+                                    <form asp-action="UpdateStatus" method="post" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="Todo" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn" title="Reopen as Todo">↺ Reopen</button>
+                                    </form>
+
+                                    <a asp-action="Edit" asp-route-id="@task.Id" class="task-action-btn" title="Edit">✎</a>
+
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Delete task: @task.Title?');" style="margin: 0;">
+                                        <input type="hidden" name="id" value="@task.Id" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="task-action-btn btn-del" title="Delete">✕</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    }
+
+</div>

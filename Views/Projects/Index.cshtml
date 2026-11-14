@@ -1,0 +1,228 @@
+@model IEnumerable<DevPulse.Models.Project>
+
+@{
+    ViewData["Title"] = "Projects";
+    var currentSearch = ViewBag.CurrentSearch as string;
+    var currentStatus = ViewBag.CurrentStatus as string ?? "All";
+    var currentPriority = ViewBag.CurrentPriority as string ?? "All";
+    var currentSort = ViewBag.CurrentSort as string ?? "newest";
+}
+
+<div class="page-shell">
+
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">WORKSPACE</span>
+            <h1>My Projects</h1>
+            <p>Manage, monitor, and accelerate your engineering projects.</p>
+        </div>
+
+        <a asp-controller="Projects"
+           asp-action="Create"
+           class="primary-button">
+            <span>+</span>
+            New Project
+        </a>
+    </div>
+
+    <!-- SEARCH & FILTER CONTROLS -->
+    <div class="filter-panel">
+        <form method="get" asp-action="Index" class="filter-form">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text"
+                       name="search"
+                       value="@currentSearch"
+                       placeholder="Search by project name, tech stack, or description..."
+                       class="search-input" />
+            </div>
+
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select name="status" onchange="this.form.submit()" class="filter-select">
+                        <option value="All" selected="@(currentStatus == "All")">All Statuses</option>
+                        <option value="Active" selected="@(currentStatus == "Active")">Active</option>
+                        <option value="Completed" selected="@(currentStatus == "Completed")">Completed</option>
+                        <option value="Paused" selected="@(currentStatus == "Paused")">Paused</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select name="priority" onchange="this.form.submit()" class="filter-select">
+                        <option value="All" selected="@(currentPriority == "All")">All Priorities</option>
+                        <option value="High" selected="@(currentPriority == "High")">High</option>
+                        <option value="Medium" selected="@(currentPriority == "Medium")">Medium</option>
+                        <option value="Low" selected="@(currentPriority == "Low")">Low</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select name="sortBy" onchange="this.form.submit()" class="filter-select">
+                        <option value="newest" selected="@(currentSort == "newest")">Newest First</option>
+                        <option value="oldest" selected="@(currentSort == "oldest")">Oldest First</option>
+                        <option value="name" selected="@(currentSort == "name")">Name (A-Z)</option>
+                        <option value="name-desc" selected="@(currentSort == "name-desc")">Name (Z-A)</option>
+                        <option value="progress" selected="@(currentSort == "progress")">Progress</option>
+                        <option value="deadline" selected="@(currentSort == "deadline")">Upcoming Deadline</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="secondary-button" style="padding: 9px 16px;">Filter</button>
+                @if (!string.IsNullOrEmpty(currentSearch) || currentStatus != "All" || currentPriority != "All" || currentSort != "newest")
+                {
+                    <a asp-action="Index" class="secondary-button" style="padding: 9px 14px;" title="Reset filters">Reset</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📁</div>
+
+            <h2>No projects found</h2>
+
+            <p>
+                @(string.IsNullOrEmpty(currentSearch) && currentStatus == "All" && currentPriority == "All"
+                    ? "Create your first project and start tracking your development work."
+                    : "No projects match your active search or filter criteria.")
+            </p>
+
+            @if (string.IsNullOrEmpty(currentSearch) && currentStatus == "All" && currentPriority == "All")
+            {
+                <a asp-controller="Projects"
+                   asp-action="Create"
+                   class="primary-button">
+                    Create Your First Project
+                </a>
+            }
+            else
+            {
+                <a asp-action="Index" class="secondary-button">
+                    Clear Filters
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="projects-grid">
+            @foreach (var project in Model)
+            {
+                var completedTasks = project.Tasks?.Count(t => t.Status == "Done") ?? 0;
+                var totalTasks = project.Tasks?.Count ?? 0;
+
+                <article class="project-card">
+
+                    <div class="project-card-top">
+                        <div class="project-tech">
+                            @project.Technology
+                        </div>
+
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span class="priority-pill @project.Priority.ToLower()">
+                                @project.Priority
+                            </span>
+                            <span class="status-badge @project.Status.ToLower()">
+                                @project.Status
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="project-card-body">
+                        <h2>@project.Name</h2>
+
+                        <p>
+                            @(string.IsNullOrWhiteSpace(project.Description)
+                                ? "No description provided."
+                                : project.Description)
+                        </p>
+                    </div>
+
+                    <div class="project-progress">
+                        <div class="progress-header">
+                            <span>Progress</span>
+                            <strong>@project.Progress%</strong>
+                        </div>
+
+                        <div class="progress-track">
+                            <div class="progress-fill"
+                                 style="width: @project.Progress%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-meta">
+                        <div>
+                            <span>Tasks</span>
+                            <strong>
+                                <a asp-controller="Tasks" asp-action="Index" asp-route-projectId="@project.Id" style="color: #818cf8; text-decoration: none;">
+                                    @completedTasks / @totalTasks Done &rarr;
+                                </a>
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Logged / Est.</span>
+                            <strong>
+                                @project.HoursSpent.ToString("0.#") / @project.EstimatedHours.ToString("0.#") hrs
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Start Date</span>
+                            <strong>@project.StartDate.ToString("dd/MM/yyyy")</strong>
+                        </div>
+
+                        <div>
+                            <span>Due Date</span>
+                            <strong style="@(project.DueDate.HasValue && project.DueDate.Value < DateOnly.FromDateTime(DateTime.Today) && project.Status != "Completed" ? "color: #f87171;" : "")">
+                                @(project.DueDate?.ToString("dd/MM/yyyy") ?? "None")
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="project-card-actions">
+                        <a asp-controller="Projects"
+                           asp-action="Details"
+                           asp-route-id="@project.Id"
+                           class="secondary-button"
+                           title="Project Details">
+                            Details
+                        </a>
+
+                        <a asp-controller="Tasks"
+                           asp-action="Index"
+                           asp-route-projectId="@project.Id"
+                           class="secondary-button"
+                           title="Manage Tasks">
+                            Tasks (@totalTasks)
+                        </a>
+
+                        <a asp-controller="Projects"
+                           asp-action="Edit"
+                           asp-route-id="@project.Id"
+                           class="secondary-button"
+                           title="Edit Project">
+                            Edit
+                        </a>
+
+                        <a asp-controller="Projects"
+                           asp-action="Delete"
+                           asp-route-id="@project.Id"
+                           class="danger-button"
+                           title="Delete Project">
+                            Delete
+                        </a>
+                    </div>
+
+                </article>
+            }
+        </div>
+    }
+
+</div>
